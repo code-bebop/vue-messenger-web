@@ -6,8 +6,8 @@
         {{ user.username }}(Guest{{ user.order }})
       </li>
     </ol>
-    <div class="chat-textarea">
-      <ol class="chat-messageList" ref="messageListDOM">
+    <div class="chat-textarea" ref="chatTextarea">
+      <ol class="chat-messageList" ref="chatMessageList">
         <li v-for="(message, index) in state.messages" :key="index">
           {{ message.username }}(Guest{{ message.order }}):
           {{ message.messageText }}
@@ -35,6 +35,7 @@ import {
   onUnmounted,
   reactive,
   ref,
+  watch,
 } from "@vue/runtime-core";
 import { useRoute } from "vue-router";
 
@@ -47,7 +48,8 @@ export default {
     const route = useRoute();
     const username = computed(() => route.params.username);
 
-    const messageListDOM = ref(null);
+    const chatTextarea = ref(null);
+    const chatMessageList = ref(null);
 
     const state = reactive({
       inputMessage: "",
@@ -56,6 +58,13 @@ export default {
       userList: [],
       userId: "",
     });
+
+    watch(
+      () => state.messages.length,
+      () => {
+        chatTextarea.value.scrollTop = chatTextarea.value.scrollHeight;
+      }
+    );
 
     function chatSubmit() {
       if (state.inputMessage === "") return;
@@ -70,7 +79,7 @@ export default {
     onMounted(() => {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
-      console.log(messageListDOM);
+      console.log(chatMessageList);
 
       $socket.on("connect", () => {
         state.userId = $socket.id;
@@ -78,10 +87,9 @@ export default {
       $socket.on("joinUser", ({ username, order }) => {
         const f = document.createDocumentFragment();
         const joinUserLi = document.createElement("li");
-        joinUserLi.setAttribute("v-key");
         joinUserLi.innerHTML = `${username}(Guest${order}) 님이 접속했습니다.`;
         f.appendChild(joinUserLi);
-        messageListDOM.value.appendChild(f);
+        chatMessageList.value.appendChild(f);
       });
       $socket.on("exitUser", ({ username, order }) => {
         state.textarea +=
@@ -106,7 +114,8 @@ export default {
       state,
       chatSubmit,
       username,
-      messageListDOM,
+      chatMessageList,
+      chatTextarea,
     };
   },
 };
@@ -129,8 +138,10 @@ export default {
     resize: none;
     margin: 0;
     box-sizing: border-box;
+    overflow-y: auto;
     .chat-messageList {
       list-style: none;
+      margin: 2em 0;
     }
   }
   .chat-userList {
