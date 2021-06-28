@@ -9,8 +9,13 @@
     <div class="chat-textarea" ref="chatTextarea">
       <ol class="chat-messageList" ref="chatMessageList">
         <li v-for="(message, index) in state.messages" :key="index">
-          {{ message.username }}(Guest{{ message.order }}):
-          {{ message.messageText }}
+          {{
+            message.type === "chat"
+              ? `${message.username}(Guest${message.order}): ${message.messageText}`
+              : message.type === "welcome"
+              ? `${message.username}(Guest${message.order})님이 입장하셨습니다.`
+              : `${message.username}(Guest${message.order})님이 퇴장하셨습니다.`
+          }}
         </li>
       </ol>
     </div>
@@ -56,7 +61,7 @@ export default {
       messages: [],
       userCount: 0,
       userList: [],
-      userId: "",
+      userId: $socket.id,
     });
 
     watch(
@@ -79,21 +84,12 @@ export default {
     onMounted(() => {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
-      console.log(chatMessageList);
 
-      $socket.on("connect", () => {
-        state.userId = $socket.id;
-      });
       $socket.on("joinUser", ({ username, order }) => {
-        const f = document.createDocumentFragment();
-        const joinUserLi = document.createElement("li");
-        joinUserLi.innerHTML = `${username}(Guest${order}) 님이 접속했습니다.`;
-        f.appendChild(joinUserLi);
-        chatMessageList.value.appendChild(f);
+        state.messages.push({ username, order, type: "welcome" });
       });
       $socket.on("exitUser", ({ username, order }) => {
-        state.textarea +=
-          `${username}(Guest${order}) 님이 접속을 해제했습니다.` + "\n";
+        state.messages.push({ username, order, type: "goodbye" });
       });
       $socket.on("userListUpdate", (userList) => {
         state.userList = userList.slice();
@@ -102,7 +98,12 @@ export default {
         state.userCount = count;
       });
       $socket.on("chat", ({ username, message, order }) => {
-        state.messages.push({ username, messageText: message, order });
+        state.messages.push({
+          username,
+          messageText: message,
+          order,
+          type: "chat",
+        });
       });
     });
 
