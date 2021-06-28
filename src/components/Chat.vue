@@ -17,6 +17,7 @@
               : `${message.username}(Guest${message.order})님이 퇴장하셨습니다.`
           }}
         </li>
+        <li v-if="state.isDisconnected">서버가 닫혔습니다.</li>
       </ol>
     </div>
 
@@ -61,7 +62,7 @@ export default {
       messages: [],
       userCount: 0,
       userList: [],
-      userId: $socket.id,
+      isDisconnected: true,
     });
 
     watch(
@@ -76,7 +77,7 @@ export default {
 
       $socket.emit("chat", {
         message: state.inputMessage,
-        userId: state.userId,
+        userId: $socket.id,
       });
       state.inputMessage = "";
     }
@@ -85,6 +86,9 @@ export default {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
 
+      $socket.on("connect", () => {
+        state.isDisconnected = false;
+      });
       $socket.on("joinUser", ({ username, order }) => {
         state.messages.push({ username, order, type: "welcome" });
       });
@@ -104,6 +108,10 @@ export default {
           order,
           type: "chat",
         });
+      });
+      $socket.on("disconnect", () => {
+        alert("서버가 닫혔습니다.");
+        state.isDisconnected = true;
       });
     });
 
