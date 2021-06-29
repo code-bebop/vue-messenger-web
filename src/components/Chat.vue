@@ -2,22 +2,41 @@
   <div class="chat-main">
     <ol class="chat-userList">
       <li class="user-count">{{ state.userCount }}명 접속중</li>
-      <li v-for="user in state.userList" :key="user.id">
+      <li
+        v-for="user in state.userList"
+        :key="user.id"
+        class="chat-userList__item"
+      >
         {{ user.username }}(Guest{{ user.order }})
       </li>
     </ol>
     <div class="chat-textarea" ref="chatTextarea">
       <ol class="chat-messageList" ref="chatMessageList">
-        <li v-for="(message, index) in state.messages" :key="index">
+        <li
+          v-for="(message, index) in state.messages"
+          :key="index"
+          :class="[
+            message.type === 'chat' ? 'chat-message' : 'system-message',
+            message.userId === userId ? 'my-chat-message' : '',
+          ]"
+        >
+          <p
+            v-if="message.type === 'chat' && message.username !== username"
+            class="chat-message__username"
+          >
+            {{ `${message.username}(Guest${message.order})` }}
+          </p>
           {{
             message.type === "chat"
-              ? `${message.username}(Guest${message.order}): ${message.messageText}`
+              ? `${message.messageText}`
               : message.type === "welcome"
               ? `${message.username}(Guest${message.order})님이 입장하셨습니다.`
               : `${message.username}(Guest${message.order})님이 퇴장하셨습니다.`
           }}
         </li>
-        <li v-if="state.isDisconnected">서버가 닫혔습니다.</li>
+        <li v-if="state.isDisconnected" class="system-message">
+          서버가 닫혔습니다.
+        </li>
       </ol>
     </div>
 
@@ -53,6 +72,7 @@ export default {
 
     const route = useRoute();
     const username = computed(() => route.params.username);
+    const userId = computed(() => $socket.id);
 
     const chatTextarea = ref(null);
     const chatMessageList = ref(null);
@@ -62,13 +82,15 @@ export default {
       messages: [],
       userCount: 0,
       userList: [],
-      isDisconnected: true,
+      isDisconnected: $socket.disconnected,
     });
 
     watch(
       () => state.messages.length,
       () => {
-        chatTextarea.value.scrollTop = chatTextarea.value.scrollHeight;
+        chatTextarea.value.scrollTo({
+          top: chatTextarea.value.scrollHeight,
+        });
       }
     );
 
@@ -86,9 +108,6 @@ export default {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
 
-      $socket.on("connect", () => {
-        state.isDisconnected = false;
-      });
       $socket.on("joinUser", ({ username, order }) => {
         state.messages.push({ username, order, type: "welcome" });
       });
@@ -101,11 +120,12 @@ export default {
       $socket.on("count", (count) => {
         state.userCount = count;
       });
-      $socket.on("chat", ({ username, message, order }) => {
+      $socket.on("chat", ({ username, message, order, chattedUserId }) => {
         state.messages.push({
           username,
           messageText: message,
           order,
+          userId: chattedUserId,
           type: "chat",
         });
       });
@@ -125,6 +145,7 @@ export default {
       username,
       chatMessageList,
       chatTextarea,
+      userId,
     };
   },
 };
@@ -145,25 +166,67 @@ export default {
     min-width: 80vw;
     height: 90vh;
     resize: none;
-    margin: 0;
     box-sizing: border-box;
     overflow-y: auto;
     .chat-messageList {
       list-style: none;
-      margin: 2em 0;
+      margin: 0;
+      margin-bottom: 10vh;
+      padding: 4.6em 50px 2em;
+      box-sizing: border-box;
+      &:after {
+        content: "";
+        display: block;
+        clear: both;
+      }
+      & > li {
+        margin-bottom: 2.6em;
+        clear: both;
+      }
+      .system-message {
+        text-align: center;
+        font-weight: bold;
+      }
+      .chat-message {
+        float: left;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #dcdcdc;
+        position: relative;
+        &.my-chat-message {
+          float: right;
+          background-color: #fdfdfd;
+          border: 1px solid hotpink;
+        }
+        &__username {
+          width: 200px;
+          position: absolute;
+          top: -3em;
+          left: 0;
+          font-size: 0.9em;
+          font-weight: bold;
+        }
+      }
     }
   }
   .chat-userList {
     list-style: none;
     text-align: left;
-    border: 1px solid #ccc;
-    padding-top: 60px;
+    border: 1px solid #dcdcdc;
+    border-bottom: none;
+    padding: 0;
     margin: 0;
     grid-row: 1 / 3;
     box-sizing: border-box;
+    overflow-y: auto;
+    &__item {
+      padding: 5px;
+      padding-left: 40px;
+    }
     .user-count {
-      margin-bottom: 1em;
+      margin: 3em 0;
       font-size: 1.4em;
+      text-align: center;
     }
   }
   #chat-form-input {
