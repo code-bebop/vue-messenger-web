@@ -34,8 +34,12 @@
               : `${message.username}(Guest${message.order})님이 퇴장하셨습니다.`
           }}
         </li>
-        <li v-if="state.isDisconnected" class="system-message">
-          서버가 닫혔습니다.
+        <li v-if="state.disconnected.is" class="system-message">
+          {{
+            state.disconnected.reason === "transport close"
+              ? "서버가 종료되었습니다."
+              : "채팅방을 나갔습니다."
+          }}
         </li>
       </ol>
     </div>
@@ -68,7 +72,9 @@ export default {
   name: "Chat",
   setup() {
     const app = getCurrentInstance();
-    const $socket = app.appContext.config.globalProperties.$socket;
+    const $socket = computed(
+      () => app.appContext.config.globalProperties.$socket
+    ).value;
 
     const route = useRoute();
     const username = computed(() => route.params.username);
@@ -82,7 +88,7 @@ export default {
       messages: [],
       userCount: 0,
       userList: [],
-      isDisconnected: $socket.disconnected,
+      disconnected: {},
     });
 
     watch(
@@ -108,6 +114,10 @@ export default {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
 
+      $socket.on("connect", () => {
+        state.disconnected.is = false;
+      });
+
       $socket.on("joinUser", ({ username, order }) => {
         state.messages.push({ username, order, type: "welcome" });
       });
@@ -129,9 +139,11 @@ export default {
           type: "chat",
         });
       });
-      $socket.on("disconnect", () => {
-        alert("서버가 닫혔습니다.");
-        state.isDisconnected = true;
+      $socket.on("disconnect", (reason) => {
+        state.disconnected = {
+          is: true,
+          reason,
+        };
       });
     });
 
