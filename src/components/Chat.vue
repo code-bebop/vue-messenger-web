@@ -42,6 +42,15 @@
           }}
         </li>
       </ol>
+      <transition name="fade">
+        <button
+          v-if="state.newMessage"
+          @click="(state.newMessage = false), showNewMessage()"
+          class="chat-textarea__newMessageButton"
+        >
+          `새 메시지 읽기`
+        </button>
+      </transition>
     </div>
 
     <form id="chat-form" @submit.prevent="chatSubmit">
@@ -51,6 +60,7 @@
         autocomplete="off"
         placeholder="여기에 텍스트 입력"
         v-model="state.inputMessage"
+        @keyup.enter="showNewMessage"
       />
     </form>
   </div>
@@ -67,9 +77,11 @@ import {
   watch,
 } from "@vue/runtime-core";
 import { useRoute } from "vue-router";
+import { Transition } from "vue";
 
 export default {
   name: "Chat",
+  components: { Transition },
   setup() {
     const app = getCurrentInstance();
     const $socket = computed(
@@ -89,15 +101,19 @@ export default {
       userCount: 0,
       userList: [],
       disconnected: {},
+      newMessage: false,
     });
 
     watch(
       () => state.messages.length,
       () => {
-        chatTextarea.value.scrollTo({
-          top: chatTextarea.value.scrollHeight,
-        });
-      }
+        if (isSeenNewMessage()) {
+          chatTextarea.value.scrollTo({
+            top: chatTextarea.value.scrollHeight,
+          });
+        }
+      },
+      { flush: "post" }
     );
 
     function chatSubmit() {
@@ -108,6 +124,26 @@ export default {
         userId: $socket.id,
       });
       state.inputMessage = "";
+    }
+
+    function isSeenNewMessage() {
+      function ifIsntPositiveReturnTrue(number) {
+        if (number > 0) {
+          return false;
+        }
+        return true;
+      }
+      return ifIsntPositiveReturnTrue(
+        chatTextarea.value.scrollHeight -
+          (chatTextarea.value.scrollTop + chatTextarea.value.offsetHeight + 105)
+      );
+    }
+
+    function showNewMessage() {
+      console.log("showNewMessage");
+      chatTextarea.value.scrollTo({
+        top: chatTextarea.value.scrollHeight,
+      });
     }
 
     onMounted(() => {
@@ -138,6 +174,10 @@ export default {
           userId: chattedUserId,
           type: "chat",
         });
+
+        if (!isSeenNewMessage() && chattedUserId !== userId.value) {
+          state.newMessage = true;
+        }
       });
       $socket.on("disconnect", (reason) => {
         state.disconnected = {
@@ -158,6 +198,7 @@ export default {
       chatMessageList,
       chatTextarea,
       userId,
+      showNewMessage,
     };
   },
 };
@@ -183,7 +224,6 @@ export default {
     .chat-messageList {
       list-style: none;
       margin: 0;
-      margin-bottom: 10vh;
       padding: 4.6em 50px 2em;
       box-sizing: border-box;
       &:after {
@@ -218,6 +258,25 @@ export default {
           font-size: 0.9em;
           font-weight: bold;
         }
+      }
+    }
+    &__newMessageButton {
+      position: absolute;
+      bottom: 17vh;
+      left: 55%;
+      font-size: 1.2rem;
+      padding: 1em;
+      background-color: hotpink;
+      outline: none;
+      border: none;
+      color: #fdfdfd;
+      border-radius: 10px;
+      cursor: pointer;
+      &:hover {
+        background-color: #ff8ec7;
+      }
+      &:active {
+        background-color: #ff2f97;
       }
     }
   }
@@ -255,6 +314,16 @@ export default {
         color: transparent;
       }
     }
+  }
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: all 0.35s ease;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+    transform: translateY(50px);
   }
 }
 </style>
