@@ -208,7 +208,7 @@ export default {
 .chat-main {
   display: grid;
   grid-template-columns: 4fr 1fr;
-  grid-template-rows: 90vh 10vh;
+  grid-template-rows: auto minmax(75px, 10vh);
   width: 100vw;
   height: 100vh;
   .chat-textarea {
@@ -217,7 +217,6 @@ export default {
     border-left: none;
     max-width: 80vw;
     min-width: 80vw;
-    height: 90vh;
     resize: none;
     box-sizing: border-box;
     overflow-y: auto;
