@@ -1,6 +1,6 @@
 <template>
   <div class="chat-main">
-    <ol class="chat-userList">
+    <ol class="chat-userList" :class="[state.showUserList ? '' : 'fold']">
       <li class="user-count">{{ state.userCount }}명 접속중</li>
       <li
         v-for="user in state.userList"
@@ -11,6 +11,9 @@
       </li>
     </ol>
     <div class="chat-textarea" ref="chatTextarea">
+      <button class="chat-textarea__toggleButton" @click="toggleUserList">
+        {{ state.showUserList ? `&lt;` : `>` }}
+      </button>
       <ol class="chat-messageList" ref="chatMessageList">
         <li
           v-for="(message, index) in state.messages"
@@ -48,7 +51,7 @@
           @click="(state.newMessage = false), showNewMessage()"
           class="chat-textarea__newMessageButton"
         >
-          `새 메시지 읽기`
+          새 메시지
         </button>
       </transition>
     </div>
@@ -102,6 +105,7 @@ export default {
       userList: [],
       disconnected: {},
       newMessage: false,
+      showUserList: true,
     });
 
     watch(
@@ -144,6 +148,10 @@ export default {
       chatTextarea.value.scrollTo({
         top: chatTextarea.value.scrollHeight,
       });
+    }
+
+    function toggleUserList() {
+      state.showUserList = !state.showUserList;
     }
 
     onMounted(() => {
@@ -199,6 +207,7 @@ export default {
       chatTextarea,
       userId,
       showNewMessage,
+      toggleUserList,
     };
   },
 };
@@ -207,16 +216,13 @@ export default {
 <style lang="scss" scoped>
 .chat-main {
   display: grid;
-  grid-template-columns: 4fr 1fr;
+  grid-template-columns: auto 1fr;
   grid-template-rows: auto minmax(75px, 10vh);
   width: 100vw;
   height: 100vh;
   .chat-textarea {
     background: #fdfdfd;
-    border: 1px solid #ccc;
-    border-left: none;
-    max-width: 80vw;
-    min-width: 80vw;
+    border-bottom: 1px solid #ccc;
     resize: none;
     box-sizing: border-box;
     overflow-y: auto;
@@ -262,7 +268,8 @@ export default {
     &__newMessageButton {
       position: absolute;
       bottom: 17vh;
-      left: 55%;
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 1.2rem;
       padding: 1em;
       background-color: hotpink;
@@ -278,17 +285,42 @@ export default {
         background-color: #ff2f97;
       }
     }
+    &__toggleButton {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      outline: none;
+      font-weight: bold;
+      font-size: 2em;
+      color: white;
+      background-color: #dcdcdc;
+      border-radius: 5px;
+      width: 40px;
+      height: 40px;
+      opacity: 0.5;
+      z-index: 1;
+      &:hover {
+        opacity: 1;
+        background-color: hotpink;
+      }
+      &:active {
+        background-color: #ff2f97;
+      }
+    }
   }
   .chat-userList {
     list-style: none;
     text-align: left;
-    border: 1px solid #dcdcdc;
-    border-bottom: none;
+    border-right: 1px solid #dcdcdc;
     padding: 0;
     margin: 0;
     grid-row: 1 / 3;
     box-sizing: border-box;
     overflow-y: auto;
+    width: 275px;
     &__item {
       padding: 5px;
       padding-left: 40px;
@@ -297,6 +329,13 @@ export default {
       margin: 3em 0;
       font-size: 1.4em;
       text-align: center;
+    }
+    &.fold {
+      width: 0;
+      transform: translateX(-100%);
+      & > li {
+        display: none;
+      }
     }
   }
   #chat-form-input {
