@@ -1,19 +1,7 @@
 <template>
   <div class="chat-main">
-    <ol class="chat-userList" :class="[state.showUserList ? '' : 'fold']">
-      <li class="user-count">{{ state.userCount }}명 접속중</li>
-      <li
-        v-for="user in state.userList"
-        :key="user.id"
-        class="chat-userList__item"
-      >
-        {{ user.username }}(Guest{{ user.order }})
-      </li>
-    </ol>
+    <UserList :userList="state.userList" :userCount="state.userCount" />
     <div class="chat-textarea" ref="chatTextarea">
-      <button class="chat-textarea__toggleButton" @click="toggleUserList">
-        {{ state.showUserList ? `&lt;` : `>` }}
-      </button>
       <ol class="chat-messageList" ref="chatMessageList">
         <li
           v-for="(message, index) in state.messages"
@@ -81,10 +69,11 @@ import {
 } from "@vue/runtime-core";
 import { useRoute } from "vue-router";
 import { Transition } from "vue";
+import UserList from "./UserList.vue";
 
 export default {
   name: "Chat",
-  components: { Transition },
+  components: { Transition, UserList },
   setup() {
     const app = getCurrentInstance();
     const $socket = computed(
@@ -100,12 +89,11 @@ export default {
 
     const state = reactive({
       inputMessage: "",
-      messages: [],
-      userCount: 0,
       userList: [],
+      userCount: 0,
+      messages: [],
       disconnected: {},
       newMessage: false,
-      showUserList: true,
     });
 
     watch(
@@ -148,10 +136,6 @@ export default {
       chatTextarea.value.scrollTo({
         top: chatTextarea.value.scrollHeight,
       });
-    }
-
-    function toggleUserList() {
-      state.showUserList = !state.showUserList;
     }
 
     onMounted(() => {
@@ -207,7 +191,6 @@ export default {
       chatTextarea,
       userId,
       showNewMessage,
-      toggleUserList,
     };
   },
 };
@@ -285,59 +268,8 @@ export default {
         background-color: #ff2f97;
       }
     }
-    &__toggleButton {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      outline: none;
-      font-weight: bold;
-      font-size: 2em;
-      color: white;
-      background-color: #dcdcdc;
-      border-radius: 5px;
-      width: 40px;
-      height: 40px;
-      opacity: 0.5;
-      z-index: 1;
-      &:hover {
-        opacity: 1;
-        background-color: hotpink;
-      }
-      &:active {
-        background-color: #ff2f97;
-      }
-    }
   }
-  .chat-userList {
-    list-style: none;
-    text-align: left;
-    border-right: 1px solid #dcdcdc;
-    padding: 0;
-    margin: 0;
-    grid-row: 1 / 3;
-    box-sizing: border-box;
-    overflow-y: auto;
-    width: 275px;
-    &__item {
-      padding: 5px;
-      padding-left: 40px;
-    }
-    .user-count {
-      margin: 3em 0;
-      font-size: 1.4em;
-      text-align: center;
-    }
-    &.fold {
-      width: 0;
-      transform: translateX(-100%);
-      & > li {
-        display: none;
-      }
-    }
-  }
+
   #chat-form-input {
     width: 100%;
     height: 100%;
