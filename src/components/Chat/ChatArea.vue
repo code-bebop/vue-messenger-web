@@ -234,7 +234,7 @@ export default {
     &.fade-enter-from,
     &.fade-leave-to {
       opacity: 0;
-      transform: translateY(50px);
+      transform: translate(-50%, 50px);
     }
   }
 }
