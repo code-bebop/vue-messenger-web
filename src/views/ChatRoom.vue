@@ -5,7 +5,7 @@
 <script>
 import { computed } from "@vue/runtime-core";
 import { useRoute } from "vue-router";
-import Chat from "../components/Chat.vue";
+import Chat from "../components/Chat/Chat.vue";
 
 export default {
   name: "ChatRoom",
