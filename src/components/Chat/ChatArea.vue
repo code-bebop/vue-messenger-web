@@ -138,9 +138,6 @@ export default {
           type: "chat",
         });
 
-        console.log(chattedUserId);
-        console.log(userId.value);
-
         if (!isSeenNewMessage() && chattedUserId !== userId.value) {
           chatAreaProps.newMessage = true;
         }

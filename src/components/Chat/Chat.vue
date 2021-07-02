@@ -63,7 +63,6 @@ export default {
         state.userCount = count;
       });
       $socket.on("disconnect", (reason) => {
-        console.log("disconnect");
         state.disconnected = {
           is: true,
           reason,
