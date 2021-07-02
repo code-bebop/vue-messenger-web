@@ -59,6 +59,7 @@ import {
   watch,
 } from "vue";
 import ChatInput from "./ChatInput.vue";
+import throttle from "lodash/throttle";
 
 export default {
   components: { Transition, ChatInput },
@@ -104,11 +105,11 @@ export default {
       });
     }
 
-    function deleteNewMessageButtonIfIsSeenNewMessage() {
+    const deleteNewMessageButtonIfIsSeenNewMessage = throttle(() => {
       if (isSeenNewMessage()) {
         chatAreaProps.newMessage = false;
       }
-    }
+    }, 200);
 
     watch(
       () => chatAreaProps.messages.length,
