@@ -41,6 +41,7 @@
       </button>
     </transition>
   </div>
+  <ChatInput @showNewMessage="showNewMessage" />
 </template>
 
 <script>
@@ -53,9 +54,10 @@ import {
   Transition,
   watch,
 } from "vue";
+import ChatInput from "./ChatInput.vue";
 
 export default {
-  components: { Transition },
+  components: { Transition, ChatInput },
   props: {
     username: String,
     disconnected: {

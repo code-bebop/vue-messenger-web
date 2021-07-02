@@ -2,16 +2,6 @@
   <div class="chat-main">
     <UserList :userList="state.userList" :userCount="state.userCount" />
     <ChatArea :username="username" :disconnected="state.disconnected" />
-    <form id="chat-form" @submit.prevent="chatSubmit">
-      <input
-        type="text"
-        id="chat-form-input"
-        autocomplete="off"
-        placeholder="여기에 텍스트 입력"
-        v-model="state.inputMessage"
-        @keyup.enter="showNewMessage"
-      />
-    </form>
   </div>
 </template>
 
@@ -49,16 +39,6 @@ export default {
       },
     });
 
-    function chatSubmit() {
-      if (state.inputMessage === "") return;
-
-      $socket.emit("chat", {
-        message: state.inputMessage,
-        userId: $socket.id,
-      });
-      state.inputMessage = "";
-    }
-
     onMounted(() => {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
@@ -90,7 +70,6 @@ export default {
 
     return {
       state,
-      chatSubmit,
       username,
     };
   },
@@ -104,21 +83,5 @@ export default {
   grid-template-rows: auto minmax(75px, 10vh);
   width: 100vw;
   height: 100vh;
-
-  #chat-form-input {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    box-sizing: border-box;
-    border: none;
-    outline: none;
-    font-size: 18px;
-    padding-left: 50px;
-    &:focus {
-      &::placeholder {
-        color: transparent;
-      }
-    }
-  }
 }
 </style>
