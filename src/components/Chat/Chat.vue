@@ -34,7 +34,7 @@ export default {
       userList: [],
       userCount: 0,
       disconnected: {
-        is: true,
+        is: false,
         reason: "",
       },
     });
@@ -42,6 +42,13 @@ export default {
     onMounted(() => {
       $socket.emit("joinUser", username.value);
       $socket.emit("getCount");
+
+      if ($socket.disconnected) {
+        state.disconnected = {
+          is: true,
+          reason: "transport close",
+        };
+      }
 
       $socket.on("connect", () => {
         state.disconnected = {
