@@ -1,5 +1,9 @@
 <template>
-  <div class="chat-textarea" ref="chatTextarea">
+  <div
+    class="chat-textarea"
+    ref="chatTextarea"
+    @scroll="deleteNewMessageButtonIfIsSeenNewMessage"
+  >
     <ol class="chat-messageList" ref="chatMessageList">
       <li
         v-for="(message, index) in chatAreaProps.messages"
@@ -100,6 +104,12 @@ export default {
       });
     }
 
+    function deleteNewMessageButtonIfIsSeenNewMessage() {
+      if (isSeenNewMessage()) {
+        chatAreaProps.newMessage = false;
+      }
+    }
+
     watch(
       () => chatAreaProps.messages.length,
       () => {
@@ -147,6 +157,7 @@ export default {
       chatMessageList,
       showNewMessage,
       userId,
+      deleteNewMessageButtonIfIsSeenNewMessage,
     };
   },
 };
